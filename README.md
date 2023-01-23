@@ -1,3 +1,3 @@
 # Frida Dump global-metadata.dat
-Works on iOS.  
+Works on iOS and Android.  
 Run target application in frontmost.
