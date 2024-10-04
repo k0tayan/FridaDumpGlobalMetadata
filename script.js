@@ -16,10 +16,7 @@ for (const range of Process.enumerateRanges({protection: "r--", coalesce: true})
 				nextOffset = nowOffset + address.add(offset+4).readU32()
 			}
 			if (found){
-				const DefinitionsOffset = EndOffset
-
-				const DefinitionsCount = address.add(EndOffset-4).readU32()
-				const global_metadata_size = DefinitionsOffset + DefinitionsCount
+				const global_metadata_size = nextOffset
 				console.log("Size: ", global_metadata_size)
 
 				send("metadata", address.readByteArray(global_metadata_size))
