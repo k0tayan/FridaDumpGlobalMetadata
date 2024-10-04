@@ -1,35 +1,29 @@
 console.log("Searching global-metadata.dat in memory...")
-Process.enumerateRangesSync({protection: "r--", coalesce: true}).forEach(element => {
-    Memory.scan(element.base, element.size, "AF 1B B1 FA", {
-        onMatch(address, size){
-            console.log("Metadata found at: " + address.toString())
+for (const range of Process.enumerateRanges({protection: "r--", coalesce: true})) {
+	Memory.scan(range.base, range.size, "AF 1B B1 FA", {
+		onMatch(address, size){
+			console.log("Metadata found at: " + address)
 
-            var found = true;
-            var DefinitionsOffset = parseInt(address, 16) + 0x108;
-            var DefinitionsOffset_size = Memory.readInt(ptr(DefinitionsOffset));
+			let found = true;
+			const EndOffset = address.add(0x8).readU32()
+			let nextOffset = EndOffset;
+			for (let offset = 0x8; offset < EndOffset; offset += 0x8) {
+				const nowOffset = address.add(offset).readU32()
+				if (nowOffset !== nextOffset) {
+					found = false
+					break
+				}
+				nextOffset = nowOffset + address.add(offset+4).readU32()
+			}
+			if (found){
+				const DefinitionsOffset = EndOffset
 
-            var DefinitionsCount = parseInt(address, 16) + 0x10C;
-            var DefinitionsCount_size = Memory.readInt(ptr(DefinitionsCount));
-            while (DefinitionsCount_size < 10)
-            {
-                DefinitionsOffset -= 0x08;
-                if (DefinitionsOffset < 0)
-                {
-                    found = false;
-                    break;
-                }
-                DefinitionsOffset_size = Memory.readInt(ptr(DefinitionsOffset));
+				const DefinitionsCount = address.add(EndOffset-4).readU32()
+				const global_metadata_size = DefinitionsOffset + DefinitionsCount
+				console.log("Size: ", global_metadata_size)
 
-                DefinitionsCount -= 0x08;
-                DefinitionsCount_size = Memory.readInt(ptr(DefinitionsCount));
-            }
-            if (found){
-                var global_metadata_size = DefinitionsOffset_size + DefinitionsCount_size;
-                console.log("Size: ", global_metadata_size);
-
-                address.readByteArray(element.size)
-                send("metadata", address.readByteArray(global_metadata_size))
-            }
-        }
-    })
-})
+				send("metadata", address.readByteArray(global_metadata_size))
+			}
+		}
+	})
+}
