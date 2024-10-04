@@ -7,7 +7,7 @@ session = device.attach(application.pid)
 cnt = 1
 def my_message_handler(message, payload):
     global cnt
-    if message["payload"] == "metadata":
+    if "payload" in message and message["payload"] == "metadata":
         print("Dumping metadata...")
         with open(f"global-metadata-{cnt}.dat", "wb") as f:
             f.write(payload)

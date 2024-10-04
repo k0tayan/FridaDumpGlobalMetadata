@@ -2,7 +2,7 @@ console.log("Searching global-metadata.dat in memory...")
 for (const range of Process.enumerateRanges({protection: "r--", coalesce: true})) {
 	Memory.scan(range.base, range.size, "AF 1B B1 FA", {
 		onMatch(address, size){
-			console.log("Metadata found at: " + address)
+			console.log("global-metadata.dat signature found at: " + address)
 
 			let found = true;
 			const EndOffset = address.add(0x8).readU32()
@@ -17,9 +17,11 @@ for (const range of Process.enumerateRanges({protection: "r--", coalesce: true})
 			}
 			if (found){
 				const global_metadata_size = nextOffset
-				console.log("Size: ", global_metadata_size)
+                if(global_metadata_size > 0x100){
+                    console.log("Size: ", global_metadata_size)
 
-				send("metadata", address.readByteArray(global_metadata_size))
+                    send("metadata", address.readByteArray(global_metadata_size))
+                }
 			}
 		}
 	})
